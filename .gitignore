@@ -1,0 +1,36 @@
+# 敏感配置文件
+.env
+
+# 日志文件
+logs/
+*.log
+
+# 临时文件
+temp/
+*.tmp
+
+# 运行时生成的配置文件（包含订阅信息）
+conf/config.yaml
+conf/cache.db
+
+# 系统文件
+.DS_Store
+Thumbs.db
+*~
+
+# IDE 文件
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 编译文件
+*.o
+*.a
+
+# 个人文档（可选，如果不想上传可以取消注释）
+# INSTALL_COMPLETE.md
+# ROOT_SETUP.md
+# clash_env.sh
+# setup_root.sh
+
