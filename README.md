@@ -31,6 +31,8 @@
 
 ```bash
 $ git clone https://github.com/wanhebin/clash-for-linux.git
+# 或使用本仓库
+$ git clone https://github.com/helloswx/clash_ubuntu.git
 ```
 
 进入到项目目录，编辑`.env`文件，修改变量`CLASH_URL`的值。
@@ -40,7 +42,17 @@ $ cd clash-for-linux
 $ vim .env
 ```
 
-> **注意：** `.env` 文件中的变量 `CLASH_SECRET` 为自定义 Clash Secret，值为空时，脚本将自动生成随机字符串。
+`.env` 文件格式示例：
+
+```bash
+# Clash 订阅地址
+export CLASH_URL='https://your-subscription-url'
+export CLASH_SECRET=''
+```
+
+> **注意：** 
+> - `.env` 文件中的变量 `CLASH_SECRET` 为自定义 Clash Secret，值为空时，脚本将自动生成随机字符串。
+> - 如果没有 `curl` 命令，脚本会自动使用 `wget` 作为备选方案。
 
 <br>
 
@@ -83,6 +95,12 @@ Secret：xxxxxxxxxxxxx
 $ source /etc/profile.d/clash.sh
 $ proxy_on
 ```
+
+> **提示：** 如果没有 root 权限，环境变量文件可能无法写入 `/etc/profile.d/`。可以使用项目目录下的 `clash_env.sh` 文件：
+> ```bash
+> $ source clash_env.sh
+> $ proxy_on
+> ```
 
 - 检查服务端口
 
@@ -138,6 +156,47 @@ $ proxy_off
 
 然后检查程序端口、进程以及环境变量`http_proxy|https_proxy`，若都没则说明服务正常关闭。
 
+<br>
+
+## 项目脚本说明
+
+项目包含以下主要脚本：
+
+| 脚本文件 | 功能说明 |
+|---------|---------|
+| `start.sh` | 启动 Clash 服务（下载配置、启动服务） |
+| `restart.sh` | 重启 Clash 服务（不更新订阅） |
+| `shutdown.sh` | 停止 Clash 服务 |
+| `clash_env.sh` | 环境变量管理脚本（开启/关闭代理） |
+| `setup_root.sh` | 设置 root 用户密码的辅助脚本 |
+
+### 环境变量脚本使用
+
+如果以普通用户运行，可以使用项目目录下的 `clash_env.sh`：
+
+```bash
+# 加载环境变量
+source clash_env.sh
+
+# 开启系统代理
+proxy_on
+
+# 关闭系统代理
+proxy_off
+```
+
+### 查看日志
+
+```bash
+tail -f logs/clash.log
+```
+
+<br>
+
+## 相关文档
+
+- **INSTALL_COMPLETE.md** - 详细的安装完成说明和使用指南
+- **ROOT_SETUP.md** - root 用户设置指南（如果需要以 root 用户运行）
 
 <br>
 
@@ -162,10 +221,61 @@ $ proxy_off
 
 # 常见问题
 
-1. 部分Linux系统默认的 shell `/bin/sh` 被更改为 `dash`，运行脚本会出现报错（报错内容一般会有 `-en [ OK ]`）。建议使用 `bash xxx.sh` 运行脚本。
+1. **脚本运行报错**：部分Linux系统默认的 shell `/bin/sh` 被更改为 `dash`，运行脚本会出现报错（报错内容一般会有 `-en [ OK ]`）。建议使用 `bash xxx.sh` 运行脚本。
 
-2. 部分用户在UI界面找不到代理节点，基本上是因为厂商提供的clash配置文件是经过base64编码的，且配置文件格式不符合clash配置标准。
-
-   目前此项目已集成自动识别和转换clash配置文件的功能。如果依然无法使用，则需要通过自建或者第三方平台（不推荐，有泄露风险）对订阅地址转换。
+2. **找不到代理节点**：部分用户在UI界面找不到代理节点，基本上是因为厂商提供的clash配置文件是经过base64编码的，且配置文件格式不符合clash配置标准。
    
-3. 程序日志中出现`error: unsupported rule type RULE-SET`报错，解决方法查看官方[WIKI](https://github.com/Dreamacro/clash/wiki/FAQ#error-unsupported-rule-type-rule-set)
+   目前此项目已集成自动识别和转换clash配置文件的功能。如果依然无法使用，则需要通过自建或者第三方平台（不推荐，有泄露风险）对订阅地址转换。
+
+3. **RULE-SET 错误**：程序日志中出现`error: unsupported rule type RULE-SET`报错，解决方法查看官方[WIKI](https://github.com/Dreamacro/clash/wiki/FAQ#error-unsupported-rule-type-rule-set)
+
+4. **缺少 curl 命令**：如果系统没有安装 `curl`，脚本会自动使用 `wget` 作为备选。建议安装 `curl` 以获得更好的兼容性：
+   ```bash
+   # Ubuntu/Debian
+   sudo apt-get install curl
+   
+   # CentOS/RHEL
+   sudo yum install curl
+   ```
+
+5. **权限问题**：如果没有 root 权限，环境变量文件无法写入 `/etc/profile.d/`，可以使用项目目录下的 `clash_env.sh` 文件来管理代理环境变量。
+
+6. **服务未启动**：如果服务启动失败，请检查：
+   - `.env` 文件中的 `CLASH_URL` 是否正确
+   - 订阅地址是否可以访问
+   - 端口 7890、7891、7892、9090 是否被占用
+   - 查看日志文件：`tail -f logs/clash.log`
+
+<br>
+
+# 项目结构
+
+```
+clash-for-linux/
+├── bin/                    # Clash 二进制文件（amd64/arm64/armv7）
+├── conf/                   # 配置文件目录
+│   ├── config.yaml        # Clash 主配置文件（运行时生成）
+│   └── Country.mmdb       # GeoIP 数据库
+├── dashboard/              # Clash Dashboard (yacd)
+├── logs/                   # 日志文件目录
+├── scripts/                # 辅助脚本
+│   ├── clash_profile_conversion.sh  # 配置文件转换脚本
+│   └── get_cpu_arch.sh     # CPU 架构检测脚本
+├── temp/                   # 临时文件目录
+├── tools/                  # 工具目录（subconverter）
+├── .env                    # 环境变量配置文件（需自行创建）
+├── start.sh                # 启动脚本
+├── restart.sh              # 重启脚本
+├── shutdown.sh             # 停止脚本
+├── clash_env.sh            # 环境变量管理脚本
+├── setup_root.sh           # root 用户设置脚本
+└── README.md               # 本文件
+```
+
+<br>
+
+# 许可证
+
+本项目基于 [clash](https://github.com/Dreamacro/clash) 和 [yacd](https://github.com/haishanh/yacd) 进行整合。
+
+原始项目：[wanhebin/clash-for-linux](https://github.com/wanhebin/clash-for-linux)

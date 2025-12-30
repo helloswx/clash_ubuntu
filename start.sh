@@ -101,8 +101,8 @@ Text1="Clash订阅地址可访问！"
 Text2="Clash订阅地址不可访问！"
 # 优先使用 curl，如果不存在则使用 wget
 if command -v curl &> /dev/null; then
-	curl -o /dev/null -L -k -sS --retry 5 -m 10 --connect-timeout 10 -w "%{http_code}" $URL | grep -E '^[23][0-9]{2}$' &>/dev/null
-	ReturnStatus=$?
+curl -o /dev/null -L -k -sS --retry 5 -m 10 --connect-timeout 10 -w "%{http_code}" $URL | grep -E '^[23][0-9]{2}$' &>/dev/null
+ReturnStatus=$?
 else
 	# 使用 wget 实际下载一小部分来检测（使用 --max-size 限制下载大小）
 	wget --no-check-certificate --timeout=10 --tries=1 -q -O /dev/null --max-redirect=5 --limit-rate=1M $URL 2>&1
